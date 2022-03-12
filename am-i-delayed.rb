@@ -1,4 +1,6 @@
 require 'net/http'
+require 'net/smtp'
+require 'time'
 require 'json'
 require 'pp'
 
@@ -37,3 +39,24 @@ res.each do | disruption |
   puts disruption['timespans'][0]['situation']['label']
   puts disruption['expectedDuration']['description']
 end
+
+def sendMail(body)
+  message = <<EOF
+From: Your helper mailer <helloimmortarion@gmail.com>
+To: Thom Veldhuis <{TO_EMAIL}>
+MIME-Version: 1.0
+Content-type: text/html
+Subject: There are disruptions on your train line plan!
+Date: #{Time.now.rfc2822}
+
+<b>This is an automatic email.</b>
+<h2>This is the disruption:</h2>
+#{body}
+EOF
+
+  Net::SMTP.start('smtp.gmail.com', 587, user: 'helloimmortarion@gmail.com', secret: '{TOP_SECRET}', authtype: :login) do |smtp|
+    smtp.send_message(message, 'helloimmortarion@gmail.com', '{TO_EMAIL}')
+  end
+end
+
+sendMail(res)
